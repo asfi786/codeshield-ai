@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact — CodeShield AI</title>
+  <meta name="description" content="Get in touch with Asfund Ali, the developer behind CodeShield AI." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- Ambient background -->
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+  <div class="orb orb-3" aria-hidden="true"></div>
+  <div class="grid-overlay" aria-hidden="true"></div>
+
+  <!-- Glass sticky header -->
+  <header id="site-header" class="glass sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 font-extrabold text-lg tracking-tight">
+        <span class="text-2xl" aria-hidden="true">🛡️</span>
+        <span>CodeShield <span class="text-sky-400">AI</span></span>
+      </a>
+      <nav class="flex items-center gap-4 sm:gap-6 text-sm font-medium text-slate-300">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/about" class="nav-link">About</a>
+        <a href="/contact" class="nav-link">Contact</a>
+        <a href="/docs" class="nav-link">API Docs</a>
+        <span id="auth-area" class="flex items-center"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+
+    <div class="text-center pt-14 sm:pt-20 pb-10">
+      <span class="hero-badge">💬 Contact</span>
+      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mt-5">
+        Let's <span class="gradient-text">talk.</span>
+      </h1>
+      <p class="text-slate-400 text-base sm:text-lg mt-4 max-w-xl mx-auto">
+        Questions about CodeShield AI, feedback, or a project in mind?
+        Reach out — I usually reply within a day.
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6 max-w-5xl mx-auto items-start">
+
+      <!-- Contact details, stacked vertically -->
+      <div class="glass p-7 sm:p-9">
+        <div class="contact-row">
+          <div class="contact-icon" aria-hidden="true">👤</div>
+          <div>
+            <p class="contact-label">Name</p>
+            <p class="contact-value">Asfund Ali</p>
+            <p class="contact-sub">Full-Stack Web Developer</p>
+          </div>
+        </div>
+
+        <div class="contact-row">
+          <div class="contact-icon" aria-hidden="true">📧</div>
+          <div>
+            <p class="contact-label">Email</p>
+            <a href="mailto:asfundali22@gmail.com" class="contact-value contact-link">asfundali22@gmail.com</a>
+          </div>
+        </div>
+
+        <div class="contact-row">
+          <div class="contact-icon" aria-hidden="true">💬</div>
+          <div>
+            <p class="contact-label">WhatsApp</p>
+            <a href="https://wa.me/923116530234" target="_blank" rel="noopener" class="contact-value contact-link">0311 6530234</a>
+            <p class="contact-sub">Fastest way to reach me</p>
+          </div>
+        </div>
+
+        <div class="contact-row">
+          <div class="contact-icon" aria-hidden="true">🐙</div>
+          <div>
+            <p class="contact-label">GitHub</p>
+            <a href="https://github.com/asfi786" target="_blank" rel="noopener" class="contact-value contact-link">github.com/asfi786</a>
+          </div>
+        </div>
+
+        <div class="contact-row contact-row-last">
+          <div class="contact-icon" aria-hidden="true">📍</div>
+          <div>
+            <p class="contact-label">Location</p>
+            <p class="contact-value">Pakistan</p>
+            <p class="contact-sub">Working remotely worldwide</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message form (opens WhatsApp with your message) -->
+      <div class="glass p-7 sm:p-9">
+        <h2 class="text-xl font-bold">Send a message</h2>
+        <p class="text-slate-400 text-sm mt-1 mb-5">Fill this in and it will open WhatsApp with your message ready to send.</p>
+        <form id="contact-form" novalidate>
+          <label class="auth-label">Your name
+            <input id="contact-name" type="text" class="input-glass w-full mt-1" autocomplete="name" placeholder="Your name" />
+          </label>
+          <label class="auth-label">Your email
+            <input id="contact-email" type="email" class="input-glass w-full mt-1" autocomplete="email" placeholder="you@example.com" />
+          </label>
+          <label class="auth-label">Message
+            <textarea id="contact-message" rows="5" class="input-glass w-full mt-1" placeholder="Hi Asfund, ..."></textarea>
+          </label>
+          <p id="contact-error" class="hidden text-sm text-red-400 mt-2" role="alert"></p>
+          <button type="submit" class="btn-primary w-full mt-5">💬 Send via WhatsApp</button>
+        </form>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="relative z-10 border-t border-white/10 mt-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-sm text-slate-500">
+      <p>🛡️ <span class="font-semibold text-slate-300">CodeShield AI</span> · GitHub repo auditor · MIT License</p>
+      <p>Built by <span class="font-semibold text-slate-200">Asfund Ali</span></p>
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <a href="mailto:asfundali22@gmail.com" class="nav-link">✉️ asfundali22@gmail.com</a>
+        <a href="https://wa.me/923116530234" target="_blank" rel="noopener" class="nav-link">💬 0311 6530234</a>
+        <a href="/contact" class="nav-link">Contact</a>
+        <a href="/docs" class="nav-link">API documentation</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/auth.js"></script>
+  <script src="js/contact.js"></script>
+</body>
+</html>

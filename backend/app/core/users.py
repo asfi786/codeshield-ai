@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import time
 from typing import Any
 
@@ -46,12 +47,15 @@ class UserStore:
             raise UserStoreUnavailableError(
                 "The 'vercel' package is not installed."
             ) from exc
-        try:
-            self._client = AsyncBlobClient()
-        except Exception as exc:
+        # Pass the read-write token explicitly: relying on the SDK's
+        # automatic credential resolution (OIDC vs. static token) is
+        # ambiguous on Vercel, and a wrong guess breaks every call.
+        token = os.environ.get("BLOB_READ_WRITE_TOKEN")
+        if not token:
             raise UserStoreUnavailableError(
                 "Blob store is not configured (missing BLOB_READ_WRITE_TOKEN)."
-            ) from exc
+            )
+        self._client = AsyncBlobClient(token=token)
 
     async def get_user(self, email: str) -> dict[str, Any] | None:
         """Return the user record for an email, or None."""

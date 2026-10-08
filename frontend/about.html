@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — CodeShield AI</title>
+  <meta name="description" content="What CodeShield AI does, how it scores repositories, and the technology behind it." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- Ambient background -->
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+  <div class="orb orb-3" aria-hidden="true"></div>
+  <div class="grid-overlay" aria-hidden="true"></div>
+
+  <!-- Glass sticky header -->
+  <header id="site-header" class="glass sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 font-extrabold text-lg tracking-tight">
+        <span class="text-2xl" aria-hidden="true">🛡️</span>
+        <span>CodeShield <span class="text-sky-400">AI</span></span>
+      </a>
+      <nav class="flex items-center gap-4 sm:gap-6 text-sm font-medium text-slate-300">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/about" class="nav-link">About</a>
+        <a href="/contact" class="nav-link">Contact</a>
+        <a href="/docs" class="nav-link">API Docs</a>
+        <span id="auth-area" class="flex items-center"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+
+    <div class="text-center pt-14 sm:pt-20 pb-10">
+      <span class="hero-badge">🛡️ About the project</span>
+      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mt-5">
+        Audit any GitHub repo<br />
+        <span class="gradient-text">like a senior engineer.</span>
+      </h1>
+      <p class="text-slate-400 text-base sm:text-lg mt-4 max-w-2xl mx-auto">
+        CodeShield AI scans a repository's code for leaked secrets and common
+        vulnerabilities, maps its architecture, and turns everything into one
+        clear score with actionable recommendations.
+      </p>
+    </div>
+
+    <!-- What it checks -->
+    <h2 class="text-2xl sm:text-3xl font-bold text-center">What it checks</h2>
+    <p class="text-slate-400 text-center mt-2 mb-8">Five engines, one report.</p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div class="glass p-6">
+        <div class="step-icon">🔑</div>
+        <h3 class="font-bold text-lg mt-3">Secret detection</h3>
+        <p class="text-slate-400 text-sm mt-2">9 regex patterns hunt for API keys, tokens, private keys and credentials accidentally committed to the repo.</p>
+      </div>
+      <div class="glass p-6">
+        <div class="step-icon">🐞</div>
+        <h3 class="font-bold text-lg mt-3">Vulnerability scan</h3>
+        <p class="text-slate-400 text-sm mt-2">9 vulnerability classes — SQL injection, XSS, command injection, hardcoded secrets, insecure randomness and more.</p>
+      </div>
+      <div class="glass p-6">
+        <div class="step-icon">🧩</div>
+        <h3 class="font-bold text-lg mt-3">Framework detection</h3>
+        <p class="text-slate-400 text-sm mt-2">17 framework indicators identify Django, Flask, FastAPI, React, Next.js, Spring and others from project files.</p>
+      </div>
+      <div class="glass p-6">
+        <div class="step-icon">🗂️</div>
+        <h3 class="font-bold text-lg mt-3">Language mapping</h3>
+        <p class="text-slate-400 text-sm mt-2">40+ language mappings break the codebase down by language, files and lines of code with visual charts.</p>
+      </div>
+      <div class="glass p-6">
+        <div class="step-icon">🏛️</div>
+        <h3 class="font-bold text-lg mt-3">Architecture review</h3>
+        <p class="text-slate-400 text-sm mt-2">7 best-practice checks — README, license, tests, CI, .gitignore, docs and dependency manifests.</p>
+      </div>
+      <div class="glass p-6">
+        <div class="step-icon">📊</div>
+        <h3 class="font-bold text-lg mt-3">One clear score</h3>
+        <p class="text-slate-400 text-sm mt-2">Everything rolls up into a single 0–100 score and a letter grade from A+ to F, with prioritized fixes.</p>
+      </div>
+    </div>
+
+    <!-- Scoring -->
+    <div class="glass p-6 sm:p-10 mt-12 max-w-4xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center">How scoring works</h2>
+      <p class="text-slate-400 text-center mt-2 mb-8">Transparent, deterministic, no black box.</p>
+      <div class="grid sm:grid-cols-2 gap-6 text-center">
+        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+          <div class="text-4xl font-extrabold text-red-400">55%</div>
+          <p class="font-semibold mt-2">Security</p>
+          <p class="text-slate-400 text-sm mt-1">Secrets and vulnerabilities found in the code, weighted by severity.</p>
+        </div>
+        <div class="p-6 rounded-2xl bg-white/5 border border-white/10">
+          <div class="text-4xl font-extrabold text-sky-400">45%</div>
+          <p class="font-semibold mt-2">Architecture</p>
+          <p class="text-slate-400 text-sm mt-1">Project hygiene — docs, tests, CI, licensing and structure.</p>
+        </div>
+      </div>
+      <p class="text-slate-500 text-sm text-center mt-6">Grades run from <span class="font-semibold text-slate-300">A+</span> (90+) down to <span class="font-semibold text-slate-300">F</span> (below 40).</p>
+    </div>
+
+    <!-- Tech -->
+    <h2 class="text-2xl sm:text-3xl font-bold text-center mt-16">Under the hood</h2>
+    <p class="text-slate-400 text-center mt-2 mb-8">A clean, boring-in-the-best-way stack.</p>
+    <div class="flex flex-wrap justify-center gap-3 max-w-3xl mx-auto">
+      <span class="tech-chip">FastAPI</span>
+      <span class="tech-chip">Python</span>
+      <span class="tech-chip">Tailwind CSS</span>
+      <span class="tech-chip">Vanilla JS</span>
+      <span class="tech-chip">Chart.js</span>
+      <span class="tech-chip">Vercel</span>
+      <span class="tech-chip">Vercel Blob</span>
+    </div>
+
+    <div class="text-center mt-14">
+      <a href="/" class="btn-primary inline-block">🔍 Audit a repository</a>
+      <p class="mt-4"><a href="/contact" class="nav-link text-sm">Questions? Get in touch →</a></p>
+    </div>
+
+  </main>
+
+  <footer class="relative z-10 border-t border-white/10 mt-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-sm text-slate-500">
+      <p>🛡️ <span class="font-semibold text-slate-300">CodeShield AI</span> · GitHub repo auditor · MIT License</p>
+      <p>Built by <span class="font-semibold text-slate-200">Asfund Ali</span></p>
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <a href="mailto:asfundali22@gmail.com" class="nav-link">✉️ asfundali22@gmail.com</a>
+        <a href="https://wa.me/923116530234" target="_blank" rel="noopener" class="nav-link">💬 0311 6530234</a>
+        <a href="/contact" class="nav-link">Contact</a>
+        <a href="/docs" class="nav-link">API documentation</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/auth.js"></script>
+</body>
+</html>

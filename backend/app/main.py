@@ -69,6 +69,16 @@ def create_app() -> FastAPI:
         """Serve the single-page frontend."""
         return FileResponse(index_file)
 
+    @app.get("/about", include_in_schema=False)
+    async def serve_about() -> FileResponse:
+        """Serve the about page."""
+        return FileResponse(FRONTEND_DIR / "about.html")
+
+    @app.get("/contact", include_in_schema=False)
+    async def serve_contact() -> FileResponse:
+        """Serve the contact page."""
+        return FileResponse(FRONTEND_DIR / "contact.html")
+
     for mount_path, subdir in (("/css", "css"), ("/js", "js"), ("/assets", "assets")):
         static_dir = FRONTEND_DIR / subdir
         if static_dir.is_dir():
