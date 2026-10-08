@@ -1,20 +1,60 @@
 /* ============================================================
-   CodeShield AI — Google sign-in header UI (vanilla JS)
-   - On load, asks GET /api/v1/auth/me and renders either the
-     "Sign in with Google" button or the signed-in user chip.
-   - Sign-in is a plain redirect to /api/v1/auth/google/login;
-     logout POSTs /api/v1/auth/logout and re-renders.
+   CodeShield AI — authentication UI (vanilla JS)
+   - Sign-in / Register modal with tabs + Continue with Google.
+   - Header shows "Sign in" button or the user chip (avatar + logout).
+   - The analyzer form is gated: logged-out visitors see a locked
+     panel with a sign-in CTA instead.
+   Exposes: window.CodeShieldAuth.refresh()
    ============================================================ */
 "use strict";
 
 (function () {
-  const GOOGLE_G_LOGO =
-    '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">' +
-    '<path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.9z"/>' +
-    '<path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>' +
-    '<path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>' +
-    '<path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.7-.4-3.9z"/>' +
-    "</svg>";
+  const $ = (id) => document.getElementById(id);
+
+  let currentUser = null;
+
+  /* ---------------- modal ---------------- */
+
+  function openModal(tab) {
+    const modal = $("auth-modal");
+    if (!modal) return;
+    setTab(tab === "register" ? "register" : "signin");
+    modal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal() {
+    const modal = $("auth-modal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+    document.body.style.overflow = "";
+  }
+
+  function setTab(which) {
+    const signin = which === "signin";
+    $("tab-signin").classList.toggle("active", signin);
+    $("tab-register").classList.toggle("active", !signin);
+    $("signin-form").classList.toggle("hidden", !signin);
+    $("register-form").classList.toggle("hidden", signin);
+    hideError("signin-error");
+    hideError("register-error");
+  }
+
+  function showError(id, message) {
+    const el = $(id);
+    if (!el) return;
+    el.textContent = message;
+    el.classList.remove("hidden");
+  }
+
+  function hideError(id) {
+    const el = $(id);
+    if (!el) return;
+    el.classList.add("hidden");
+    el.textContent = "";
+  }
+
+  /* ---------------- header + gating ---------------- */
 
   function escapeHtml(value) {
     return String(value === null || value === undefined ? "" : value).replace(
@@ -23,63 +63,153 @@
     );
   }
 
-  function renderSignedOut(area) {
-    area.innerHTML =
-      '<a href="/api/v1/auth/google/login" class="google-signin-btn">' +
-      GOOGLE_G_LOGO +
-      "<span>Sign in with Google</span>" +
-      "</a>";
-  }
+  function renderAuth() {
+    const area = $("auth-area");
+    const form = $("analyze-form");
+    const locked = $("auth-required-panel");
+    if (!area) return;
 
-  function renderSignedIn(area, user) {
-    const name = escapeHtml(user.name || user.email || "Account");
-    const picture = user.picture
-      ? '<img src="' + escapeHtml(user.picture) + '" alt="" class="user-avatar" referrerpolicy="no-referrer">'
-      : '<span class="user-avatar user-avatar-fallback" aria-hidden="true">👤</span>';
-    area.innerHTML =
-      '<span class="user-chip">' +
-      picture +
-      '<span class="user-name">' + name + "</span>" +
-      '<button type="button" id="logout-btn" class="logout-btn" title="Sign out">Sign out</button>' +
-      "</span>";
-    const btn = document.getElementById("logout-btn");
-    if (btn) {
-      btn.addEventListener("click", async () => {
-        try {
-          await fetch("/api/v1/auth/logout", { method: "POST" });
-        } catch (e) {
-          /* ignore network errors; still re-render as signed out */
-        }
-        renderSignedOut(area);
-      });
+    if (currentUser) {
+      const name = escapeHtml(currentUser.name || currentUser.email || "Account");
+      const picture = currentUser.picture
+        ? '<img src="' + escapeHtml(currentUser.picture) + '" alt="" class="user-avatar" referrerpolicy="no-referrer">'
+        : '<span class="user-avatar user-avatar-fallback" aria-hidden="true">👤</span>';
+      area.innerHTML =
+        '<span class="user-chip">' + picture +
+        '<span class="user-name">' + name + "</span>" +
+        '<button type="button" id="logout-btn" class="logout-btn" title="Sign out">Sign out</button></span>';
+      const btn = $("logout-btn");
+      if (btn) btn.addEventListener("click", logout);
+      if (form) form.classList.remove("hidden");
+      if (locked) locked.classList.add("hidden");
+    } else {
+      area.innerHTML =
+        '<button type="button" id="header-signin-btn" class="google-signin-btn">' +
+        "<span>Sign in</span></button>";
+      const btn = $("header-signin-btn");
+      if (btn) btn.addEventListener("click", () => openModal("signin"));
+      if (form) form.classList.add("hidden");
+      if (locked) locked.classList.remove("hidden");
     }
   }
 
-  async function init() {
-    const area = document.getElementById("auth-area");
-    if (!area) return;
+  async function refresh() {
     try {
       const res = await fetch("/api/v1/auth/me");
       if (res.ok) {
         const data = await res.json();
-        if (data && data.user) {
-          renderSignedIn(area, data.user);
-          return;
-        }
+        currentUser = data && data.user ? data.user : null;
+      } else {
+        currentUser = null;
       }
     } catch (e) {
-      /* backend unreachable or signed out — show the button */
+      currentUser = null;
     }
-    renderSignedOut(area);
+    renderAuth();
 
     // Surface OAuth failures (e.g. user denied consent) gently.
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("auth") === "error") {
-      params.delete("auth");
-      const clean = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
-      window.history.replaceState(null, "", clean);
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("auth") === "error") {
+        params.delete("auth");
+        const clean = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
+        window.history.replaceState(null, "", clean);
+      }
+    } catch (e) {
+      /* ignore */
     }
   }
+
+  async function logout() {
+    try {
+      await fetch("/api/v1/auth/logout", { method: "POST" });
+    } catch (e) {
+      /* ignore; still render signed out */
+    }
+    currentUser = null;
+    renderAuth();
+  }
+
+  async function submitJson(url, body, errorId, submitBtn) {
+    hideError(errorId);
+    submitBtn.disabled = true;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showError(errorId, data.detail || "Something went wrong. Please try again.");
+        return;
+      }
+      currentUser = data.user || null;
+      closeModal();
+      renderAuth();
+    } catch (e) {
+      showError(errorId, "Network error. Please check your connection and try again.");
+    } finally {
+      submitBtn.disabled = false;
+    }
+  }
+
+  /* ---------------- wiring ---------------- */
+
+  function init() {
+    const modal = $("auth-modal");
+    if (modal) {
+      $("auth-modal-close").addEventListener("click", closeModal);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !modal.classList.contains("hidden")) closeModal();
+      });
+      $("tab-signin").addEventListener("click", () => setTab("signin"));
+      $("tab-register").addEventListener("click", () => setTab("register"));
+
+      $("signin-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const email = $("signin-email").value.trim();
+        const password = $("signin-password").value;
+        if (!email || !password) {
+          showError("signin-error", "Please enter your email and password.");
+          return;
+        }
+        submitJson("/api/v1/auth/login", { email, password }, "signin-error", e.target.querySelector("button[type=submit]"));
+      });
+
+      $("register-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = $("register-name").value.trim();
+        const email = $("register-email").value.trim();
+        const password = $("register-password").value;
+        if (!name) {
+          showError("register-error", "Please enter your name.");
+          return;
+        }
+        if (!email || email.indexOf("@") < 0) {
+          showError("register-error", "Please enter a valid email address.");
+          return;
+        }
+        if (password.length < 8) {
+          showError("register-error", "Password must be at least 8 characters.");
+          return;
+        }
+        submitJson("/api/v1/auth/register", { name, email, password }, "register-error", e.target.querySelector("button[type=submit]"));
+      });
+    }
+
+    const ctaSignin = $("cta-signin-btn");
+    if (ctaSignin) ctaSignin.addEventListener("click", () => openModal("signin"));
+    const ctaRegister = $("cta-register-btn");
+    if (ctaRegister) ctaRegister.addEventListener("click", () => openModal("register"));
+
+    refresh();
+  }
+
+  window.CodeShieldAuth = { refresh, openModal };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

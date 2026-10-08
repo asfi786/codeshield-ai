@@ -16,6 +16,8 @@ serverless hosts (Vercel) where in-memory state does not survive.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 import secrets
 import time
@@ -132,3 +134,58 @@ def get_current_user(request: Request) -> dict[str, Any] | None:
     if not token:
         return None
     return read_session_token(token)
+
+
+# ---------------- Email/password credentials ----------------
+
+_PBKDF2_ITERATIONS = 600_000  # OWASP recommendation for PBKDF2-HMAC-SHA256
+
+
+def _pepper() -> bytes:
+    """Server-side pepper mixed into every password hash (never stored in the DB)."""
+    pepper = settings.password_pepper
+    if not pepper:
+        logger.warning(
+            "PASSWORD_PEPPER is not set; password hashes rely on salt alone. "
+            "Set a long random PASSWORD_PEPPER in production."
+        )
+        return b""
+    return pepper.encode("utf-8")
+
+
+def hash_password(password: str) -> str:
+    """Hash a password with per-user salt + server pepper.
+
+    Format: ``pbkdf2_sha256$<iterations>$<salt_hex>$<hash_hex>``.
+    """
+    salt = secrets.token_bytes(32)
+    dk = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8") + _pepper(), salt, _PBKDF2_ITERATIONS
+    )
+    return f"pbkdf2_sha256${_PBKDF2_ITERATIONS}${salt.hex()}${dk.hex()}"
+
+
+def verify_password(password: str, stored: str) -> bool:
+    """Constant-time password check against a stored hash."""
+    try:
+        algo, iters, salt_hex, hash_hex = stored.split("$")
+        if algo != "pbkdf2_sha256":
+            return False
+        dk = hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode("utf-8") + _pepper(),
+            bytes.fromhex(salt_hex),
+            int(iters),
+        )
+        return hmac.compare_digest(dk.hex(), hash_hex)
+    except Exception:
+        return False
+
+
+def valid_email(email: str) -> bool:
+    """Minimal sanity check for an email address."""
+    email = email.strip()
+    if "@" not in email or len(email) > 254:
+        return False
+    local, _, domain = email.partition("@")
+    return bool(local) and "." in domain and len(domain) >= 3

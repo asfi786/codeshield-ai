@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     # production; when unset, an ephemeral secret is generated at startup
     # (sessions then don't survive restarts).
     session_secret: str | None = None
+    # Server-side pepper mixed into password hashes (in addition to the
+    # per-user salt). Never stored alongside the user records.
+    password_pepper: str | None = None
 
 
 settings = Settings()

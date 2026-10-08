@@ -20,12 +20,90 @@ from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.config import settings
 from app.core import auth as auth_core
+from app.core.users import UserExistsError, UserStoreUnavailableError, get_store
+from app.models.schemas import LoginRequest, RegisterRequest
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 CALLBACK_PATH = "/api/v1/auth/google/callback"
+
+
+def _public_user(record: dict) -> dict:
+    return {
+        "name": record.get("name"),
+        "email": record.get("email"),
+        "picture": record.get("picture"),
+    }
+
+
+def _set_session_cookie(response, request: Request, user: dict) -> None:
+    token = auth_core.create_session_token(
+        {
+            "sub": user.get("email"),
+            "name": user.get("name"),
+            "email": user.get("email"),
+            "picture": user.get("picture"),
+        }
+    )
+    response.set_cookie(
+        auth_core.SESSION_COOKIE,
+        token,
+        max_age=auth_core.SESSION_TTL_SECONDS,
+        httponly=True,
+        secure=_cookie_secure(request),
+        samesite="lax",
+        path="/",
+    )
+
+
+@router.post("/register", status_code=201)
+async def register(payload: RegisterRequest, request: Request):
+    """Create a new email/password account and sign the user in."""
+    email = payload.email.strip().lower()
+    if not auth_core.valid_email(email):
+        return JSONResponse(status_code=400, content={"detail": "Invalid email address."})
+    try:
+        store = get_store()
+        record = await store.create_user(
+            payload.name, email, auth_core.hash_password(payload.password)
+        )
+    except UserExistsError:
+        return JSONResponse(
+            status_code=409, content={"detail": "An account with this email already exists."}
+        )
+    except UserStoreUnavailableError:
+        return JSONResponse(
+            status_code=503, content={"detail": "Sign-up is temporarily unavailable."}
+        )
+    response = JSONResponse(status_code=201, content={"user": _public_user(record)})
+    _set_session_cookie(response, request, record)
+    logger.info("user registered: %s", email)
+    return response
+
+
+@router.post("/login")
+async def login(payload: LoginRequest, request: Request):
+    """Sign in with email and password."""
+    email = payload.email.strip().lower()
+    try:
+        record = await get_store().get_user(email)
+    except UserStoreUnavailableError:
+        return JSONResponse(
+            status_code=503, content={"detail": "Sign-in is temporarily unavailable."}
+        )
+    if (
+        not record
+        or record.get("provider") != "password"
+        or not auth_core.verify_password(payload.password, record.get("pw_hash", ""))
+    ):
+        return JSONResponse(
+            status_code=401, content={"detail": "Invalid email or password."}
+        )
+    response = JSONResponse(content={"user": _public_user(record)})
+    _set_session_cookie(response, request, record)
+    return response
 
 
 def _redirect_uri(request: Request) -> str:

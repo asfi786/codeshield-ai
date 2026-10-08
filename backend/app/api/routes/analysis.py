@@ -20,6 +20,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.core.auth import get_current_user
 from app.core.job_manager import job_manager
 from app.core.pipeline import run_analysis
 from app.core.rate_limit import analyze_limiter
@@ -44,6 +45,11 @@ def _client_ip(request: Request) -> str:
 @router.post("", status_code=202, response_model=JobAcceptedResponse)
 async def start_analysis(payload: AnalyzeRequest, request: Request) -> Any:
     """Accept a repository URL and launch its analysis in the background."""
+    if get_current_user(request) is None:
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Please sign in to analyze repositories."},
+        )
     ip = _client_ip(request)
     if not analyze_limiter.allow(ip):
         return JSONResponse(

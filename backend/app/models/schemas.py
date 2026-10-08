@@ -18,6 +18,29 @@ class JobAcceptedResponse(BaseModel):
     status: str
 
 
+class RegisterRequest(BaseModel):
+    """Create a new user account."""
+
+    name: str = Field(..., min_length=1, max_length=80)
+    email: str = Field(..., min_length=3, max_length=254)
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+class LoginRequest(BaseModel):
+    """Sign in with email and password."""
+
+    email: str = Field(..., min_length=3, max_length=254)
+    password: str = Field(..., min_length=1, max_length=128)
+
+
+class UserResponse(BaseModel):
+    """Public user profile returned after register/login/me."""
+
+    name: str
+    email: str
+    picture: str | None = None
+
+
 class JobStatusResponse(BaseModel):
     """Pollable status of an analysis job, including the final result."""
 
