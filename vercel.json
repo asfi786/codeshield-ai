@@ -1,1 +1,1 @@
-{"$schema":"https://openapi.vercel.sh/vercel.json","env":{"ANALYZE_MODE":"sync"},"rewrites":[{"destination":"/frontend/index.html","source":"/"},{"destination":"/frontend/css/:p*","source":"/css/:p*"},{"destination":"/frontend/js/:p*","source":"/js/:p*"},{"destination":"/frontend/assets/:p*","source":"/assets/:p*"}]}
+{"$schema":"https://openapi.vercel.sh/vercel.json","env":{"ANALYZE_MODE":"sync"}}
