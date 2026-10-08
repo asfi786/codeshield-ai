@@ -1,0 +1,11 @@
+# Render Blueprint — one-click free deploy: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: codeshield-ai
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: 1
