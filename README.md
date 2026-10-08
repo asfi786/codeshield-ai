@@ -66,7 +66,9 @@ Job `status`: `queued` → `running` → `completed` | `failed`. On `completed`,
 
 ## ⚙️ Configuration
 
-All via environment (see `.env.example`): `GITHUB_TOKEN`, `DEBUG`, `ALLOWED_ORIGINS`, `MAX_FILES` (default 120), `MAX_FILES_DEEP` (default 300), `ANALYZE_MODE` (`async` default / `sync`).
+All via environment (see `.env.example`): `GITHUB_TOKEN`, `DEBUG`, `ALLOWED_ORIGINS`, `MAX_FILES` (default 120), `MAX_FILES_DEEP` (default 300), `ANALYZE_MODE` (`async` default / `sync`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`.
+
+**Google sign-in**: the header has a "Sign in with Google" button. Create an OAuth 2.0 client at https://console.cloud.google.com/apis/credentials (Web application) with the authorized redirect URI `<your-origin>/api/v1/auth/google/callback`, then set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (and a random `SESSION_SECRET`). Sessions are stateless signed JWT cookies (30 days), so sign-in works on serverless hosts. Without the credentials, the button shows a clean "not configured" message.
 
 `ANALYZE_MODE=async` (default): `POST /analyze` returns `202 { job_id }` and the analysis runs in the background — for Docker, Render, VPS. `ANALYZE_MODE=sync`: the analysis runs inside the request and the full report is returned directly — required on serverless hosts (Vercel) where background tasks do not survive the response. The frontend handles both automatically.
 

@@ -28,6 +28,15 @@ class Settings(BaseSettings):
     # report (serverless hosts like Vercel where background tasks do not
     # survive the response).
     analyze_mode: str = "async"
+    # Google OAuth sign-in (https://console.cloud.google.com/apis/credentials).
+    # The OAuth client's authorized redirect URI must be
+    # <origin>/api/v1/auth/google/callback.
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    # Secret used to sign session JWTs. Set a long random value in
+    # production; when unset, an ephemeral secret is generated at startup
+    # (sessions then don't survive restarts).
+    session_secret: str | None = None
 
 
 settings = Settings()

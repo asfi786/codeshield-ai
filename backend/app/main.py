@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import analysis, github, health, jobs
+from app.api.routes import analysis, auth, github, health, jobs
 from app.config import settings
 from app.core.job_manager import job_manager
 
@@ -60,6 +60,7 @@ def create_app() -> FastAPI:
     app.include_router(github.router, prefix="/api/v1/github", tags=["github"])
     app.include_router(analysis.router, prefix="/api/v1/analyze", tags=["analysis"])
     app.include_router(jobs.router, prefix="/api/v1/jobs", tags=["jobs"])
+    app.include_router(auth.router)
 
     index_file = FRONTEND_DIR / "index.html"
 
