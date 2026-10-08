@@ -1,4 +1,4 @@
-"""User account storage on Vercel Blob.
+"""User account storage on Vercel Blob (raw REST API).
 
 Each account is a single private JSON blob at
 ``users/{sha256(lowercase_email)}.json``. One file per user means
@@ -7,6 +7,9 @@ registrations never race each other, and lookups are direct (no listing).
 The blob holds ``{name, email, pw_hash, created_at, provider}``. Passwords
 are stored as peppered PBKDF2 hashes (see :mod:`app.core.auth`); the
 pepper lives only in the server's environment, never in the blob.
+
+We call the Blob REST API directly with httpx instead of the SDK because
+the SDK cannot derive the store URL from our token/store-id format.
 """
 
 from __future__ import annotations
@@ -18,9 +21,13 @@ import os
 import time
 from typing import Any
 
+import httpx
+
 logger = logging.getLogger(__name__)
 
 USERS_PREFIX = "users/"
+BLOB_API_URL = "https://vercel.com/api/blob"
+_TIMEOUT = 15.0
 
 
 def blob_path_for(email: str) -> str:
@@ -37,46 +44,80 @@ class UserStoreUnavailableError(Exception):
     """Raised when the blob store cannot be reached or configured."""
 
 
-class UserStore:
-    """Thin async wrapper around the Vercel Blob Python SDK."""
+def _token() -> str:
+    token = os.environ.get("BLOB_READ_WRITE_TOKEN")
+    if not token:
+        raise UserStoreUnavailableError(
+            "Blob store is not configured (missing BLOB_READ_WRITE_TOKEN)."
+        )
+    return token
 
-    def __init__(self) -> None:
-        try:
-            from vercel.blob import AsyncBlobClient
-        except ImportError as exc:
-            raise UserStoreUnavailableError(
-                "The 'vercel' package is not installed."
-            ) from exc
-        # Pass the read-write token explicitly: relying on the SDK's
-        # automatic credential resolution (OIDC vs. static token) is
-        # ambiguous on Vercel, and a wrong guess breaks every call.
-        token = os.environ.get("BLOB_READ_WRITE_TOKEN")
-        if not token:
-            raise UserStoreUnavailableError(
-                "Blob store is not configured (missing BLOB_READ_WRITE_TOKEN)."
+
+def _store_id() -> str:
+    store_id = os.environ.get("BLOB_STORE_ID")
+    if not store_id:
+        raise UserStoreUnavailableError(
+            "Blob store is not configured (missing BLOB_STORE_ID)."
+        )
+    return store_id
+
+
+def _download_url(pathname: str) -> str:
+    return f"https://{_store_id()}.private.blob.vercel-storage.com/{pathname}"
+
+
+async def _blob_get(pathname: str) -> dict[str, Any] | None:
+    """Download and parse a user blob; None when it does not exist."""
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            resp = await client.get(
+                _download_url(pathname),
+                headers={"Authorization": f"Bearer {_token()}"},
             )
-        self._client = AsyncBlobClient(token=token)
+    except Exception as exc:
+        raise UserStoreUnavailableError(f"User store request failed: {exc}") from exc
+    if resp.status_code == 404:
+        return None
+    if resp.status_code != 200:
+        raise UserStoreUnavailableError(
+            f"User store returned HTTP {resp.status_code}."
+        )
+    try:
+        return json.loads(resp.text)
+    except Exception:
+        logger.warning("corrupt user blob at %s", pathname)
+        return None
+
+
+async def _blob_put(pathname: str, record: dict[str, Any]) -> None:
+    """Upload a user blob; raises UserExistsError if the path is taken."""
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            resp = await client.put(
+                BLOB_API_URL,
+                params={"pathname": pathname},
+                content=json.dumps(record).encode("utf-8"),
+                headers={
+                    "Authorization": f"Bearer {_token()}",
+                    "x-vercel-blob-access": "private",
+                    "x-content-type": "application/json",
+                    "x-allow-overwrite": "0",
+                },
+            )
+    except Exception as exc:
+        raise UserStoreUnavailableError(f"User store request failed: {exc}") from exc
+    if resp.status_code in (200, 201):
+        return
+    # 409/400 with allow-overwrite=0 means the blob already exists.
+    raise UserExistsError(pathname)
+
+
+class UserStore:
+    """Async user store backed by Vercel Blob."""
 
     async def get_user(self, email: str) -> dict[str, Any] | None:
         """Return the user record for an email, or None."""
-        try:
-            result = await self._client.get(blob_path_for(email), access="private")
-        except Exception as exc:
-            # The SDK raises BlobNotFoundError on 404.
-            if exc.__class__.__name__ == "BlobNotFoundError":
-                return None
-            logger.warning("user lookup failed for %s: %s", email, exc)
-            raise UserStoreUnavailableError("User store is unavailable.") from exc
-        if result is None:
-            return None
-        try:
-            content = result.content
-            if isinstance(content, (bytes, bytearray)):
-                content = bytes(content).decode("utf-8")
-            return json.loads(content)
-        except Exception as exc:
-            logger.warning("corrupt user blob for %s: %s", email, exc)
-            return None
+        return await _blob_get(blob_path_for(email))
 
     async def create_user(
         self, name: str, email: str, pw_hash: str, provider: str = "password"
@@ -92,26 +133,14 @@ class UserStore:
             "provider": provider,
             "created_at": int(time.time()),
         }
-        body = json.dumps(record).encode("utf-8")
         try:
-            # overwrite=False is a backstop against a lost race: two
-            # simultaneous registrations for the same email.
-            await self._client.put(
-                blob_path_for(email_norm),
-                body,
-                access="private",
-                content_type="application/json",
-                overwrite=False,
-            )
-        except Exception as exc:
-            # If the blob appeared between our check and the put, treat as taken.
-            if await self.get_user(email_norm) is not None:
-                raise UserExistsError(email_norm) from exc
-            logger.warning("user creation failed for %s: %s", email_norm, exc)
-            raise UserStoreUnavailableError("User store is unavailable.") from exc
+            await _blob_put(blob_path_for(email_norm), record)
+        except UserExistsError:
+            # Lost the race: the blob appeared between our check and the put.
+            raise UserExistsError(email_norm)
         return record
 
 
 def get_store() -> UserStore:
-    """Build a UserStore (cheap; the SDK client holds no connections)."""
+    """Build a UserStore (stateless; safe to construct per request)."""
     return UserStore()

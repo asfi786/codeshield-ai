@@ -8,4 +8,3 @@ pydantic>=2.5.0
 pydantic-settings>=2.1.0
 python-dotenv>=1.0.0
 pyjwt>=2.8.0
-vercel>=0.1.0
