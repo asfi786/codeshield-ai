@@ -5,4 +5,3 @@ pydantic>=2.5.0           # Data validation
 pydantic-settings>=2.1.0  # Settings from env
 python-dotenv>=1.0.0      # .env file loading
 pyjwt>=2.8.0              # Signed session cookies (Google sign-in)
-vercel>=0.1.0             # Vercel Blob SDK (user account storage)
