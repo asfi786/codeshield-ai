@@ -1,0 +1,27 @@
+"""Application configuration for CodeShield AI.
+
+Settings are loaded from environment variables (and an optional ``.env``
+file) via pydantic-settings. Every field has a sane default so the
+application boots with zero configuration and no network access is
+performed at import time.
+"""
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Runtime configuration for the CodeShield AI backend."""
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    app_name: str = "CodeShield AI"
+    version: str = "1.0.0"
+    debug: bool = False
+    github_token: str | None = None
+    allowed_origins: list[str] = ["*"]
+    max_files: int = 120
+    max_files_deep: int = 300
+    request_timeout: float = 30.0
+
+
+settings = Settings()

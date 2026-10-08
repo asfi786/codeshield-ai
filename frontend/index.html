@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeShield AI — GitHub Repository Architecture &amp; Security Auditor</title>
+  <meta name="description" content="Audit any GitHub repository for security vulnerabilities and architecture quality in seconds." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] },
+        },
+      },
+    };
+  </script>
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- Ambient background -->
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+  <div class="orb orb-3" aria-hidden="true"></div>
+  <div class="grid-overlay" aria-hidden="true"></div>
+
+  <!-- Glass sticky header -->
+  <header id="site-header" class="glass sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <a href="#top" class="flex items-center gap-2 font-extrabold text-lg tracking-tight">
+        <span class="text-2xl" aria-hidden="true">🛡️</span>
+        <span>CodeShield <span class="text-sky-400">AI</span></span>
+      </a>
+      <nav class="flex items-center gap-4 sm:gap-6 text-sm font-medium text-slate-300">
+        <a href="#top" class="nav-link">Home</a>
+        <a href="#how-it-works" class="nav-link">How it works</a>
+        <a href="/docs" class="nav-link">API Docs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top" class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-20">
+
+    <!-- ============ HERO VIEW ============ -->
+    <section id="view-hero" class="view">
+      <div class="text-center pt-14 sm:pt-20 pb-10">
+        <span class="hero-badge">⚡ Security + Architecture audit</span>
+        <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight mt-5">
+          Audit any GitHub repo<br />
+          <span class="gradient-text">in seconds.</span>
+        </h1>
+        <p class="text-slate-400 text-base sm:text-lg mt-4 max-w-2xl mx-auto">
+          Paste a repository URL and get a deep security scan, architecture breakdown,
+          letter grade and actionable recommendations — no sign-up required.
+        </p>
+      </div>
+
+      <!-- Analyze form -->
+      <form id="analyze-form" class="glass p-5 sm:p-8 max-w-3xl mx-auto" novalidate>
+        <label for="repo-url" class="block text-sm font-semibold text-slate-200 mb-2">Repository URL</label>
+        <input
+          id="repo-url"
+          type="text"
+          inputmode="url"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="https://github.com/owner/repo"
+          class="input-glass w-full"
+        />
+
+        <div class="flex flex-wrap items-center gap-2 mt-3">
+          <span class="text-xs text-slate-500 mr-1">Try:</span>
+          <button type="button" class="example-chip" data-repo="https://github.com/octocat/Hello-World">octocat/Hello-World</button>
+          <button type="button" class="example-chip" data-repo="https://github.com/psf/requests">psf/requests</button>
+          <button type="button" class="example-chip" data-repo="https://github.com/tiangolo/fastapi">tiangolo/fastapi</button>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4 mt-5">
+          <div>
+            <label for="github-token" class="block text-sm font-semibold text-slate-200 mb-2">
+              GitHub token <span class="text-slate-500 font-normal">(optional)</span>
+            </label>
+            <input
+              id="github-token"
+              type="password"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="ghp_… (raises API rate limit)"
+              class="input-glass w-full"
+            />
+          </div>
+          <div class="flex items-end pb-1">
+            <label class="flex items-start gap-3 cursor-pointer select-none">
+              <input id="deep-scan" type="checkbox" class="checkbox-glass mt-1" />
+              <span class="text-sm text-slate-300">
+                <span class="font-semibold text-slate-100">Deep scan</span><br />
+                <span class="text-slate-500">Analyze more files (slower, more thorough)</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <p id="form-error" class="hidden text-sm text-red-400 mt-3" role="alert"></p>
+
+        <button id="analyze-btn" type="submit" class="btn-primary w-full mt-6">
+          🔍 Analyze repository
+        </button>
+        <p class="text-xs text-slate-500 text-center mt-3">Public repositories only. Your token never leaves your browser except to GitHub via our API.</p>
+      </form>
+
+      <!-- How it works -->
+      <div id="how-it-works" class="pt-16 sm:pt-24 scroll-mt-24">
+        <h2 class="text-2xl sm:text-3xl font-bold text-center">How it works</h2>
+        <p class="text-slate-400 text-center mt-2 mb-8">Three steps from URL to full audit report.</p>
+        <div class="grid sm:grid-cols-3 gap-4 sm:gap-6">
+          <div class="glass p-6">
+            <div class="step-icon">📋</div>
+            <h3 class="font-bold text-lg mt-3">1. Paste URL</h3>
+            <p class="text-slate-400 text-sm mt-2">Drop any public GitHub repository URL into the box above and hit Analyze. Optionally add a token for higher rate limits.</p>
+          </div>
+          <div class="glass p-6">
+            <div class="step-icon">🛡️</div>
+            <h3 class="font-bold text-lg mt-3">2. AI scans</h3>
+            <p class="text-slate-400 text-sm mt-2">We fetch the file tree, scan code against 18 security patterns, map the architecture and check 7 engineering best practices.</p>
+          </div>
+          <div class="glass p-6">
+            <div class="step-icon">📊</div>
+            <h3 class="font-bold text-lg mt-3">3. Get report</h3>
+            <p class="text-slate-400 text-sm mt-2">Security &amp; architecture scores, a letter grade, severity-filtered findings and prioritized fixes — printable in one click.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LOADING VIEW ============ -->
+    <section id="view-loading" class="view hidden">
+      <div class="glass max-w-xl mx-auto mt-16 sm:mt-24 p-8 sm:p-10 text-center">
+        <div class="scanner mx-auto" aria-hidden="true"><span class="scanner-emoji">🛡️</span></div>
+        <h2 class="text-2xl font-bold mt-6">Scanning repository…</h2>
+        <p id="loading-repo" class="text-sm text-sky-400 break-all mt-2"></p>
+        <p id="loading-stage" class="text-slate-400 text-sm mt-3 min-h-[1.5rem]">Connecting…</p>
+        <div class="progress-track mt-5">
+          <div id="progress-bar" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <p class="mt-2 text-sm font-semibold"><span id="progress-pct">0%</span></p>
+        <button id="cancel-scan-btn" type="button" class="btn-secondary mt-6">Cancel scan</button>
+      </div>
+    </section>
+
+    <!-- ============ RESULTS VIEW ============ -->
+    <section id="view-results" class="view hidden">
+
+      <!-- Repo header -->
+      <div class="glass p-5 sm:p-6 mt-10 flex flex-wrap items-center gap-4">
+        <div class="text-4xl" aria-hidden="true">📦</div>
+        <div class="flex-1 min-w-[200px]">
+          <h2 id="result-repo-name" class="text-xl sm:text-2xl font-bold break-all">—</h2>
+          <p id="result-repo-desc" class="text-slate-400 text-sm mt-1">—</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="result-repo-stars" class="text-sm font-semibold text-amber-300">★ —</span>
+          <a id="result-repo-link" href="#" target="_blank" rel="noopener" class="btn-secondary !py-2 text-sm">View on GitHub ↗</a>
+        </div>
+      </div>
+
+      <!-- Score cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-6">
+        <div class="glass p-6 text-center">
+          <div class="ring-wrap">
+            <svg class="score-ring" viewBox="0 0 120 120" role="img" aria-label="Security score">
+              <defs>
+                <linearGradient id="gradSec" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#f43f5e" /><stop offset="100%" stop-color="#fb923c" />
+                </linearGradient>
+              </defs>
+              <circle cx="60" cy="60" r="54" class="ring-bg"></circle>
+              <circle cx="60" cy="60" r="54" id="ring-security" class="ring-fg" stroke="url(#gradSec)"></circle>
+            </svg>
+            <div class="ring-label"><span id="score-security">0</span></div>
+          </div>
+          <h3 class="font-bold mt-3">Security</h3>
+          <p class="text-xs text-slate-500">Secrets &amp; vulnerability scan</p>
+        </div>
+        <div class="glass p-6 text-center">
+          <div class="ring-wrap">
+            <svg class="score-ring" viewBox="0 0 120 120" role="img" aria-label="Architecture score">
+              <defs>
+                <linearGradient id="gradArch" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38bdf8" /><stop offset="100%" stop-color="#818cf8" />
+                </linearGradient>
+              </defs>
+              <circle cx="60" cy="60" r="54" class="ring-bg"></circle>
+              <circle cx="60" cy="60" r="54" id="ring-architecture" class="ring-fg" stroke="url(#gradArch)"></circle>
+            </svg>
+            <div class="ring-label"><span id="score-architecture">0</span></div>
+          </div>
+          <h3 class="font-bold mt-3">Architecture</h3>
+          <p class="text-xs text-slate-500">Structure &amp; best practices</p>
+        </div>
+        <div class="glass p-6 text-center">
+          <div class="ring-wrap">
+            <svg class="score-ring" viewBox="0 0 120 120" role="img" aria-label="Overall score">
+              <circle cx="60" cy="60" r="54" class="ring-bg"></circle>
+              <circle cx="60" cy="60" r="54" id="ring-overall" class="ring-fg" stroke="#34d399"></circle>
+            </svg>
+            <div class="ring-label"><span id="score-overall">0</span></div>
+          </div>
+          <h3 class="font-bold mt-3">Overall <span id="grade-letter" class="grade-letter">—</span></h3>
+          <p class="text-xs text-slate-500">55% security · 45% architecture</p>
+        </div>
+      </div>
+
+      <!-- Metrics strip -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mt-6">
+        <div class="glass metric-card"><p id="metric-files" class="metric-value">0</p><p class="metric-label">Files analyzed</p></div>
+        <div class="glass metric-card"><p id="metric-dirs" class="metric-value">0</p><p class="metric-label">Directories</p></div>
+        <div class="glass metric-card"><p id="metric-loc" class="metric-value">0</p><p class="metric-label">Lines of code</p></div>
+        <div class="glass metric-card"><p id="metric-findings" class="metric-value">0</p><p class="metric-label">Findings</p></div>
+        <div class="glass metric-card"><p id="metric-langs" class="metric-value">0</p><p class="metric-label">Languages</p></div>
+        <div class="glass metric-card"><p id="metric-frameworks" class="metric-value">0</p><p class="metric-label">Frameworks</p></div>
+        <div class="glass metric-card"><p id="metric-duration" class="metric-value">0s</p><p class="metric-label">Duration</p></div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="grid md:grid-cols-2 gap-4 sm:gap-6 mt-6">
+        <div class="glass p-5 sm:p-6">
+          <h3 class="font-bold mb-4">Languages <span class="text-xs font-normal text-slate-500">by lines of code</span></h3>
+          <div class="chart-container">
+            <canvas id="chart-languages"></canvas>
+            <p id="languages-empty" class="chart-empty hidden">No language data available.</p>
+          </div>
+        </div>
+        <div class="glass p-5 sm:p-6">
+          <h3 class="font-bold mb-4">Findings <span class="text-xs font-normal text-slate-500">by severity</span></h3>
+          <div class="chart-container">
+            <canvas id="chart-severity"></canvas>
+            <p id="severity-empty" class="chart-empty hidden">No findings — clean scan. 🎉</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Best practices -->
+      <div class="mt-10">
+        <h3 class="text-xl font-bold">✅ Best practices</h3>
+        <p class="text-sm text-slate-500 mb-4">7 engineering health checks that build the architecture score.</p>
+        <div id="best-practices-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- Findings -->
+      <div class="mt-10">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-xl font-bold">🔍 Security findings</h3>
+            <p id="findings-count" class="text-sm text-slate-500">0 findings</p>
+          </div>
+          <div id="severity-filters" class="flex flex-wrap gap-2" role="group" aria-label="Filter findings by severity">
+            <button type="button" class="filter-pill active" data-severity="all">All</button>
+            <button type="button" class="filter-pill" data-severity="critical">Critical</button>
+            <button type="button" class="filter-pill" data-severity="high">High</button>
+            <button type="button" class="filter-pill" data-severity="medium">Medium</button>
+            <button type="button" class="filter-pill" data-severity="low">Low</button>
+            <button type="button" class="filter-pill" data-severity="info">Info</button>
+          </div>
+        </div>
+        <div class="glass overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="findings-table">
+              <thead>
+                <tr><th>Severity</th><th>Finding</th><th>Location</th><th>Category</th></tr>
+              </thead>
+              <tbody id="findings-body"></tbody>
+            </table>
+          </div>
+          <p id="findings-empty" class="hidden text-center text-slate-400 py-10">No findings match this filter.</p>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">Click a row to expand details, CWE reference and code snippet.</p>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="mt-10">
+        <h3 class="text-xl font-bold mb-4">💡 Recommendations</h3>
+        <div id="recommendations-list" class="grid sm:grid-cols-2 gap-3"></div>
+      </div>
+
+      <!-- Full summary -->
+      <div class="glass p-5 sm:p-6 mt-10">
+        <h3 class="text-xl font-bold mb-3">📝 Full summary</h3>
+        <p id="summary-text" class="text-slate-300 text-sm leading-relaxed whitespace-pre-line"></p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-wrap gap-3 mt-8 no-print">
+        <button id="analyze-another-btn" type="button" class="btn-secondary">← Analyze another</button>
+        <button id="print-btn" type="button" class="btn-primary">🖨️ Print report</button>
+      </div>
+    </section>
+
+    <!-- ============ ERROR VIEW ============ -->
+    <section id="view-error" class="view hidden">
+      <div class="glass max-w-xl mx-auto mt-16 sm:mt-24 p-8 sm:p-10 text-center">
+        <div class="error-icon" aria-hidden="true">✖</div>
+        <h2 class="text-2xl font-bold mt-5">Analysis failed</h2>
+        <p id="error-message" class="text-slate-400 text-sm mt-3 break-words">Something went wrong.</p>
+        <button id="try-again-btn" type="button" class="btn-primary mt-6">Try again</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="relative z-10 border-t border-white/10 mt-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+      <p>🛡️ <span class="font-semibold text-slate-300">CodeShield AI</span> · GitHub repo auditor · MIT License</p>
+      <a href="/docs" class="nav-link">API documentation</a>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
