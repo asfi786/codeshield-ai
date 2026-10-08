@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     max_files: int = 120
     max_files_deep: int = 300
     request_timeout: float = 30.0
+    # "async": POST /analyze returns 202 + job id, work runs in background
+    # (proper servers: Docker, Render, VPS).
+    # "sync": POST /analyze runs the pipeline inline and returns the full
+    # report (serverless hosts like Vercel where background tasks do not
+    # survive the response).
+    analyze_mode: str = "async"
 
 
 settings = Settings()

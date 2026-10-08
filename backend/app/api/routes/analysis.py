@@ -1,10 +1,15 @@
-"""Analysis job submission route.
+"""Analysis submission route.
 
-POST /api/v1/analyze validates the request, enforces a per-IP rate limit,
-registers a background job and immediately returns HTTP 202 with the job
-id. The heavy work runs in a fire-and-forget asyncio task that reports
-progress into the shared :data:`job_manager`; clients poll
-GET /api/v1/jobs/{job_id} for status and the final report.
+POST /api/v1/analyze validates the request and enforces a per-IP rate limit,
+then behaves according to ``settings.analyze_mode``:
+
+- ``async`` (default, proper servers): registers a background job and returns
+  HTTP 202 with the job id. The heavy work runs in a fire-and-forget asyncio
+  task that reports progress into the shared :data:`job_manager`; clients poll
+  GET /api/v1/jobs/{job_id} for status and the final report.
+- ``sync`` (serverless hosts like Vercel, where background tasks do not
+  survive the response): runs the pipeline inline and returns HTTP 200 with
+  the full analysis report.
 """
 
 import asyncio
@@ -14,6 +19,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from app.config import settings
 from app.core.job_manager import job_manager
 from app.core.pipeline import run_analysis
 from app.core.rate_limit import analyze_limiter
@@ -51,6 +57,28 @@ async def start_analysis(payload: AnalyzeRequest, request: Request) -> Any:
             status_code=400,
             content={"detail": "Invalid GitHub repository URL."},
         )
+
+    if settings.analyze_mode.strip().lower() == "sync":
+        # Serverless mode: background tasks die with the response, so run
+        # the pipeline inline and return the report directly (HTTP 200).
+        try:
+            result = await run_analysis(
+                "sync",
+                payload.repo_url,
+                payload.github_token,
+                payload.deep_scan,
+                None,
+            )
+        except ValueError as exc:
+            return JSONResponse(status_code=400, content={"detail": str(exc)})
+        except Exception as exc:
+            message = str(exc).strip() or exc.__class__.__name__
+            logger.warning("synchronous analysis failed: %s", message)
+            return JSONResponse(
+                status_code=502,
+                content={"detail": f"Analysis failed: {message}"},
+            )
+        return JSONResponse(status_code=200, content=result)
 
     job_id = job_manager.create_job(
         payload.repo_url, payload.github_token, payload.deep_scan

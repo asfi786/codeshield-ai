@@ -62,10 +62,11 @@ async function analyzeRepo(repoUrl, token, deepScan, signal) {
     signal,
   });
 
-  if (!data || !data.job_id) {
-    throw new Error("Server did not return a job id. Please try again.");
-  }
-  return data;
+  // Async mode -> { job_id } (poll GET /api/v1/jobs/{id}).
+  // Sync mode (serverless hosts) -> full AnalysisResponse inline.
+  if (data && data.job_id) return data;
+  if (data && data.overall_score !== undefined) return { result: data };
+  throw new Error("Server did not return a result. Please try again.");
 }
 
 /**

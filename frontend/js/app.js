@@ -334,15 +334,23 @@ async function startAnalysis(rawUrl) {
 
   abortController = new AbortController();
   try {
-    const { job_id } = await API().analyzeRepo(url, token, deepScan, abortController.signal);
-    const result = await API().pollJob(
-      job_id,
-      (p) => {
-        if (p.progress !== null && p.progress !== undefined) setProgress(p.progress);
-        if (p.stage) $("loading-stage").textContent = p.stage;
-      },
-      { signal: abortController.signal }
-    );
+    const data = await API().analyzeRepo(url, token, deepScan, abortController.signal);
+    let result;
+    if (data.result) {
+      // Sync mode (serverless): the full report came back inline.
+      setProgress(100);
+      $("loading-stage").textContent = "Report ready";
+      result = data.result;
+    } else {
+      result = await API().pollJob(
+        data.job_id,
+        (p) => {
+          if (p.progress !== null && p.progress !== undefined) setProgress(p.progress);
+          if (p.stage) $("loading-stage").textContent = p.stage;
+        },
+        { signal: abortController.signal }
+      );
+    }
     renderResults(result, url);
     showView("results");
   } catch (err) {

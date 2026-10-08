@@ -66,7 +66,9 @@ Job `status`: `queued` → `running` → `completed` | `failed`. On `completed`,
 
 ## ⚙️ Configuration
 
-All via environment (see `.env.example`): `GITHUB_TOKEN`, `DEBUG`, `ALLOWED_ORIGINS`, `MAX_FILES` (default 120), `MAX_FILES_DEEP` (default 300).
+All via environment (see `.env.example`): `GITHUB_TOKEN`, `DEBUG`, `ALLOWED_ORIGINS`, `MAX_FILES` (default 120), `MAX_FILES_DEEP` (default 300), `ANALYZE_MODE` (`async` default / `sync`).
+
+`ANALYZE_MODE=async` (default): `POST /analyze` returns `202 { job_id }` and the analysis runs in the background — for Docker, Render, VPS. `ANALYZE_MODE=sync`: the analysis runs inside the request and the full report is returned directly — required on serverless hosts (Vercel) where background tasks do not survive the response. The frontend handles both automatically.
 
 Without a token, GitHub allows 60 API requests/hour — one medium repo ≈ 50 requests. Add a token (free, no scopes needed for public repos) for 5000/hour.
 
@@ -99,7 +101,8 @@ codeshield_ai/
 
 Any host that runs Docker/Python works. Free options:
 
-- **Render** (free web service): connect repo → build `docker build .` → start `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`. Free tier sleeps after 15 min idle (first request wakes it, ~50s cold start).
+- **Vercel** (serverless, free): the repo ships `api/index.py` + `vercel.json` — `vercel.json` sets `ANALYZE_MODE=sync` and routes everything through the FastAPI app (API + static frontend). Just deploy the repo; no extra config needed. Function timeout is set to 120s (Hobby allows up to 300s).
+- **Render** (free web service): connect repo → it picks up `render.yaml` (Docker blueprint) automatically. Free tier sleeps after 15 min idle (first request wakes it, ~50s cold start). Uses the default `async` job mode.
 - **Hugging Face Spaces** (Docker SDK): free, same Dockerfile works.
 - **VPS**: `docker compose up -d --build`.
 
