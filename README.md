@@ -64,6 +64,13 @@ Job `status`: `queued` → `running` → `completed` | `failed`. On `completed`,
 
 **Overall** = 0.55 × Security + 0.45 × Architecture → grade A+ (90+) · A (80+) · B (70+) · C (60+) · D (50+) · F (<50).
 
+## 📄 Pages
+
+- `/` — home with the repository analyzer (sign-in required)
+- `/about` — what CodeShield AI checks, how scoring works, tech stack
+- `/contact` — contact section for Asfund Ali (vertical layout) + WhatsApp message form
+- `/docs` — interactive API documentation (FastAPI Swagger)
+
 ## ⚙️ Configuration
 
 All via environment (see `.env.example`): `GITHUB_TOKEN`, `DEBUG`, `ALLOWED_ORIGINS`, `MAX_FILES` (default 120), `MAX_FILES_DEEP` (default 300), `ANALYZE_MODE` (`async` default / `sync`), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`.
