@@ -1,3 +1,9 @@
 # Root requirements for hosts that install from the repo root (e.g. Vercel).
-# Single source of truth stays in backend/requirements.txt.
--r backend/requirements.txt
+# NOTE: Vercel's parser does not support "-r includes", so the list is
+# inlined here. Keep in sync with backend/requirements.txt.
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+httpx>=0.25.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
