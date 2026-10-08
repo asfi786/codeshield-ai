@@ -101,7 +101,7 @@ codeshield_ai/
 
 Any host that runs Docker/Python works. Free options:
 
-- **Vercel** (serverless, free): the repo ships `api/index.py` + `vercel.json` — `vercel.json` sets `ANALYZE_MODE=sync` and routes everything through the FastAPI app (API + static frontend). Just deploy the repo; no extra config needed. Function timeout is set to 120s (Hobby allows up to 300s).
+- **Vercel** (serverless, free): the repo ships `api/v1/*.py` serverless functions (one per API route — Vercel's filesystem routing guarantees each function sees its true request path) + `vercel.json`, which sets `ANALYZE_MODE=sync` and rewrites `/` and static assets to `frontend/`. Just deploy the repo; no extra config needed. Hobby functions allow up to 300s per request.
 - **Render** (free web service): connect repo → it picks up `render.yaml` (Docker blueprint) automatically. Free tier sleeps after 15 min idle (first request wakes it, ~50s cold start). Uses the default `async` job mode.
 - **Hugging Face Spaces** (Docker SDK): free, same Dockerfile works.
 - **VPS**: `docker compose up -d --build`.
